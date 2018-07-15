@@ -54,7 +54,7 @@ The output of the React build process located in the `build` directory is served
 
 The `index.html` contains fixed content like the `h1` headline to simulate the content already produced by the external application.
 
-The `page-server` applies an additional middleware to the routes defined in `server/server-side-render-paths.js` to set the custom HTTP response header `x-react-server-side-render` for those routes. In a real application the header should be set depending on whether the web page contains React components to be rendered on the server side or not.
+The `page-server` applies an additional middleware to the routes defined in `server/server-side-render-paths.json` to set the custom HTTP response header `x-react-server-side-render` for those routes. In a real application the header should be set depending on whether the web page contains React components to be rendered on the server side or not.
 
 === Integration of components into an external web page
 
