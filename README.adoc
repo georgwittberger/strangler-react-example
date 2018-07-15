@@ -14,6 +14,7 @@ Assumptions:
 * The web page can be extended to include additional JavaScript and stylesheet references.
 * The web page can be extended to include specific HTML elements at those locations where React components should be rendered.
 * Only some of the React components should be rendered on the server side, e.g. for SEO and better UX.
+* The external application should be able to control for which pages server-side rendering is performed.
 * React components need to be provided with initial data, also for server-side rendering.
 
 == Prerequisites
@@ -45,13 +46,15 @@ The project was bootstrapped with https://github.com/facebookincubator/create-re
 
 == Concepts
 
-=== Simulating the external web page
+=== Simulating the external application
 
 The Express application in `server/page-server.js` is used to simulate an external application providing the web page and all required static assets.
 
 The output of the React build process located in the `build` directory is served as static content by the `page-server`. This means that the compiled version of `public/index.html` represents the external web page which can be accessed at http://localhost:4000/.
 
 The `index.html` contains fixed content like the `h1` headline to simulate the content already produced by the external application.
+
+The `page-server` applies an additional middleware to the routes defined in `server/server-side-render-paths.js` to set the custom HTTP response header `x-react-server-side-render` for those routes. In a real application the header should be set depending on whether the web page contains React components to be rendered on the server side or not.
 
 === Integration of components into an external web page
 
@@ -100,7 +103,7 @@ The Express application in `server/render-server.js` is responsible for pre-rend
 
 The `render-server` makes use of the https://www.npmjs.com/package/express-http-proxy[`express-http-proxy`] middleware to pass all requests to the `page-server`. So, calling http://localhost:3000/index.html passes the request on to http://localhost:4000/index.html and the `page-server` provides the original response.
 
-An additional response interceptor is configured for the routes defined in `server/server-side-render-paths.json` (e.g. `/` and `/index.html`). As soon as a response for such a route is received from the upstream `page-server` the HTML content is post-processed by the `server/server-side-renderer.js` function and the returned HTML output is sent to the client.
+An additional response interceptor is configured to detect whether the response received from the upstream `page-server` should be post-processed for server-side rendering. If the response contains the custom HTTP header `x-react-server-side-render` the HTML content is processed by the `server/server-side-renderer.js` function and the generated HTML code is sent to the client. Otherwise, the response data is returned to the client without changes.
 
 The `server-side-renderer` parses the original HTML into a DOM representation using the https://www.npmjs.com/package/cheerio[`cheerio`] library. Then it looks for the container elements of all components registered in `src/server-side-components.js` and performs the server-side rendering for these components. This procedure is asynchronous in order to allow the component factory functions to perform API requests to fetch additional data to be passed as props to the components.
 
@@ -112,7 +115,7 @@ Initial data can be provided as `data-` attributes at the HTML container element
 
 == Conclusion
 
-Using a small http://expressjs.com/[Express] proxy server a web page provided by an external application can be extended with https://reactjs.org/[React] components including server-side rendering for some of those components.
+Using a small http://expressjs.com/[Express] proxy server a web page provided by an external application can be extended with https://reactjs.org/[React] components including server-side rendering for some of those components. Server-side rendering can be triggered by the external application using a custom HTTP response header.
 
 Initial data can be easily passed to React components by using `data-` attributes at the container elements.
 
