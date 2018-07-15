@@ -23,6 +23,8 @@ Assumptions:
 
 == Getting started
 
+=== Running the example
+
 . Clone the Git repository to a local directory.
 . Open a terminal in the project directory.
 . Run: `npm install`
@@ -61,23 +63,26 @@ Example:
 ----
 <link href="/static/css/main.1294e84c.css" rel="stylesheet">
 ...
-<div class="js-server-side-component" data-title="I am server-side 1" data-text="I am one component rendered on the server side."></div>
+<div class="js-server-side-component"
+     data-title="I am server-side 1"
+     data-text="I am one component rendered on the server side.">
+</div>
 ...
 <script type="text/javascript" src="/static/js/main.0d0fd195.js"></script>
 ----
 
-See the `public/index.html` for the container elements of the React components. The JavaScript and stylesheet references are not included there because Webpack integrates them during the build process. In a real external web page these references have to be included manually as well.
+See the `public/index.html` for the container elements of the React components. The JavaScript and stylesheet references are not included there because https://webpack.js.org/[Webpack] integrates them during the build process. In a real external web page these references have to be included manually as well.
 
 === Registration of client-side / server-side components
 
-Each type of React component is registered either in `src/client-side-components.js` or `src/server-side-components.js`. These lists of component definitions are used to separate the components intended for server-side rendering from those only intended for client-side usage.
+Each type of React component is registered either in `src/client-side-components.js` or `src/server-side-components.js`. These lists of component definitions are used to separate the components intended for server-side rendering from those only intended for client-side usage. The goal is to have a reusable module for creating the server-side components which can be applied both in the client rendering script `src/index.js` and the server-side rendering in `server/server-side-renderer.js`.
 
 Each of those registries provides a list of objects describing each component type as follows:
 
 [source,json]
 ----
 {
-  "name": "Name of the component. Only for debugging.",
+  "name": "Name of the component.",
   "selector": "CSS selector locating the HTML container elements.",
   "factory": "Factory function creating the component instance."
 }
