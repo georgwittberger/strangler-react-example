@@ -1,0 +1,120 @@
+= Strangler React Example
+Georg Wittberger <georg.wittberger@gmail.com>
+v1.0.0, 2018-07-15
+
+This example project demonstrates how to attach https://reactjs.org/[React] components to a web page provided by an external application, like a content management system. Furthermore, it includes a tiny http://expressjs.com/[Express] proxy for server-side rendering of a subset of React components.
+
+== Motivation
+
+The goal of this example project is to show how parts of a web page can be built using React components including server-side rendering for some of those components.
+
+Assumptions:
+
+* The web page is served by an external application, e.g. a content management system, which already generates some page content on the server side.
+* The web page can be extended to include additional JavaScript and stylesheet references.
+* The web page can be extended to include specific HTML elements at those locations where React components should be rendered.
+* Only some of the React components should be rendered on the server side, e.g. for SEO and better UX.
+* React components need to be provided with initial data, also for server-side rendering.
+
+== Prerequisites
+
+* https://nodejs.org/[Node.js] 8.11.x (or higher)
+* NPM 5.6.x (or higher)
+
+== Getting started
+
+. Clone the Git repository to a local directory.
+. Open a terminal in the project directory.
+. Run: `npm install`
+. Run: `npm run build`
+. Run: `npm run server`
+. Open your web browser at http://localhost:3000/
+
+You will see a web page with a headline and three boxes representing the React components. The headline is fixed content already included in the page on the server side. The brown components are pre-rendered into the page on the server side using a special proxy mechanism. The blue component is purely rendered in the browser.
+
+=== Project structure
+
+The project was bootstrapped with https://github.com/facebookincubator/create-react-app[Create React App] and is built on the conventions of this framework.
+
+* The `src` directory contains the source code of the React components.
+* The `public` directory contains the static assets for the project, especially the `index.html` which serves as the fixture for the components.
+* The `server` directory contains two little Express applications, one to simulate the external application serving the web page and another to perform the server-side rendering of components.
+* After running the NPM `build` script the `build` directory contains the compiled assets for the React components.
+
+== Concepts
+
+=== Simulating the external web page
+
+The Express application in `server/page-server.js` is used to simulate an external application providing the web page and all required static assets.
+
+The output of the React build process located in the `build` directory is served as static content by the `page-server`. This means that the compiled version of `public/index.html` represents the external web page which can be accessed at http://localhost:4000/.
+
+The `index.html` contains fixed content like the `h1` headline to simulate the content already produced by the external application.
+
+=== Integration of components into an external web page
+
+The React components are integrated into the web page by putting specific container elements in the HTML code and including the JavaScript and stylesheet bundles located in the `build` directory.
+
+Example:
+
+[source,html]
+----
+<link href="/static/css/main.1294e84c.css" rel="stylesheet">
+...
+<div class="js-server-side-component" data-title="I am server-side 1" data-text="I am one component rendered on the server side."></div>
+...
+<script type="text/javascript" src="/static/js/main.0d0fd195.js"></script>
+----
+
+See the `public/index.html` for the container elements of the React components. The JavaScript and stylesheet references are not included there because Webpack integrates them during the build process. In a real external web page these references have to be included manually as well.
+
+=== Registration of client-side / server-side components
+
+Each type of React component is registered either in `src/client-side-components.js` or `src/server-side-components.js`. These lists of component definitions are used to separate the components intended for server-side rendering from those only intended for client-side usage.
+
+Each of those registries provides a list of objects describing each component type as follows:
+
+[source,json]
+----
+{
+  "name": "Name of the component. Only for debugging.",
+  "selector": "CSS selector locating the HTML container elements.",
+  "factory": "Factory function creating the component instance."
+}
+----
+
+The factory function is called with the initial data obtained from the container element's `dataset` both during client-side rendering in `src/index.js` and server-side rendering in `server/server-side-renderer.js`.
+
+For the client-side components the factory function returns the component instance synchronously, so that its return value is passed to `ReactDOM.render()` directly in the `src/index.js` rendering script.
+
+For the server-side components the factory function returns a promise which resolves to the component instance in order to allow additional data to be fetched via API request during server-side rendering. Once the promise is resolved the component instance is then (pre-)rendered.
+
+=== Server-side rendering of some components
+
+The Express application in `server/render-server.js` is responsible for pre-rendering some of the React components before sending the final HTML page to the browser. Therefore, it interacts as a proxy server between the browser and the `page-server` providing the static assets.
+
+The `render-server` makes use of the https://www.npmjs.com/package/express-http-proxy[`express-http-proxy`] middleware to pass all requests to the `page-server`. So, calling http://localhost:3000/index.html passes the request on to http://localhost:4000/index.html and the `page-server` provides the original response.
+
+An additional response interceptor is configured for the routes defined in `server/server-side-render-paths.json` (e.g. `/` and `/index.html`). As soon as a response for such a route is received from the upstream `page-server` the HTML content is post-processed by the `server/server-side-renderer.js` function and the returned HTML output is sent to the client.
+
+The `server-side-renderer` parses the original HTML into a DOM representation using the https://www.npmjs.com/package/cheerio[`cheerio`] library. Then it looks for the container elements of all components registered in `src/server-side-components.js` and performs the server-side rendering for these components. This procedure is asynchronous in order to allow the component factory functions to perform API requests to fetch additional data to be passed as props to the components.
+
+On the client side the pre-rendered components are hydrated by the `src/index.js` rendering script to make them dynamic (e.g. attaching event listeners).
+
+=== Passing initial data to the components
+
+Initial data can be provided as `data-` attributes at the HTML container elements. When the rendering scripts `src/index.js` and `server/server-side-renderer.js` create the components they pass the `dataset` of each container element to the factory function of the corresponding React component. The data can be used there to populate props for initial rendering.
+
+== Conclusion
+
+Using a small http://expressjs.com/[Express] proxy server a web page provided by an external application can be extended with https://reactjs.org/[React] components including server-side rendering for some of those components.
+
+Initial data can be easily passed to React components by using `data-` attributes at the container elements.
+
+Asynchronous creation of components allows to fetch initial data via API requests even during server-side rendering. A cross-platform library like `cross-fetch` should be used to make such HTTP requests.
+
+All React components intended to be rendered on the server side must be accessible for both the client rendering script and the proxy server. Therefore, the React project should be packaged into a NPM module which can then be used as dependency in the proxy server project.
+
+== License
+
+https://opensource.org/licenses/MIT[MIT]

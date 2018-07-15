@@ -1,0 +1,36 @@
+{
+  "name": "strangler-react-example",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "server": "npm-run-all --parallel server:**",
+    "server:page": "node server/index-page-server.js",
+    "server:render": "node server/index-render-server.js",
+    "eject": "react-scripts eject"
+  },
+  "engines": {
+    "node": ">=8.11.0",
+    "npm": ">=5.6.0"
+  },
+  "dependencies": {
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "cheerio": "^1.0.0-rc.2",
+    "express": "^4.16.3",
+    "express-http-proxy": "^1.2.0",
+    "ignore-styles": "^5.0.1",
+    "jsonfile": "^4.0.0",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
+    "react-scripts": "1.1.4"
+  },
+  "devDependencies": {
+    "enzyme": "^3.3.0",
+    "enzyme-adapter-react-16": "^1.1.1",
+    "npm-run-all": "^4.1.3"
+  }
+}

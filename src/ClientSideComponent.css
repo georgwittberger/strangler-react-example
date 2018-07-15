@@ -1,0 +1,14 @@
+.client-side-component {
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 30px 50px;
+  margin-bottom: 30px;
+  border: 3px solid blue;
+  cursor: pointer;
+}
+.client-side-component__title {
+  font-size: 24pt;
+  color: blue;
+}
+.client-side-component__text {
+  font-size: 12pt;
+}
